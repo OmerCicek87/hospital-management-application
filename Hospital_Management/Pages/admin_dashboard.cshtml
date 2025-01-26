@@ -1,0 +1,1068 @@
+﻿@page
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@attribute [Authorize(Roles = "Admin")]
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Admin Dashboard</title>
+
+    <!-- Bootstrap CSS & FontAwesome -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
+
+    <!-- Bootstrap JS + Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+    <style>
+        body {
+            background-color: #F4E0AF;
+        }
+        .card {
+            border-radius: 15px;
+            border: 1px solid #ddd;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            background-color: #D8C4B6;
+        }
+        .card-header {
+            background-color: #213555;
+            color: white;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            padding: 10px 0;
+            position: relative;
+        }
+        .btn-add {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: white;
+        }
+        .btn-icon {
+            border: none;
+            background: none;
+            padding: 5px;
+        }
+        .btn-icon:hover {
+            color: #E67E22;
+        }
+        .btn-icon.remove:hover {
+            color: #C0392B;
+        }
+        .navbar {
+            background-color: #213555;
+        }
+        .navbar-nav .nav-link {
+            color: white;
+            font-size: 1.1rem;
+            padding: 10px 15px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .navbar-nav .nav-link:hover {
+            color: white;
+            background-color: #808080;
+            border-radius: 5px;
+        }
+        h2 {
+            text-align: center;
+            font-weight: bold;
+            color: #213555;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            background-color: #213555;
+            color: white;
+            margin-top: 30px;
+        }
+        th, td {
+            text-align: center;
+        }
+        .modal-body label {
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <h1 class="navbar-brand" href="#">Hospital Management</h1>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <button class="btn nav-link" id="createUserBtn" style="color:white; border:none;">
+                            Create User
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="btn btn-reports nav-link" style="border: none;" onclick="openReportsModal()">Reports</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="btn btn-logout nav-link" id="logout-btn" style="border: none;">Logout</button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTAINER -->
+    <div class="container my-5">
+        <div class="row mb-3">
+            <div class="col-12">
+                <h2>Admin Dashboard</h2>
+            </div>
+        </div>
+
+        <!-- Admins Table -->
+        <div class="card">
+            <div class="card-header">
+                Admins
+            </div>
+            <div class="card-body">
+                <table class="table table-striped" id="admins-table">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Surname</th>
+                        <th>PESEL</th>
+                        <th>Username</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Doctors Table -->
+        <div class="card">
+            <div class="card-header">
+                Doctors
+                <button class="btn btn-info btn-add" onclick="openAddDoctorDutyModal()">Add Duty</button>
+            </div>
+            <div class="card-body">
+                <table class="table table-striped" id="doctors-table">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Surname</th>
+                        <th>PESEL</th>
+                        <th>Username</th>
+                        <th>Specialty</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Nurses Table -->
+        <div class="card">
+            <div class="card-header">
+                Nurses
+                <button class="btn btn-info btn-add" onclick="openAddNurseDutyModal()">Add Duty</button>
+            </div>
+            <div class="card-body">
+                <table class="table table-striped" id="nurses-table">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Surname</th>
+                        <th>PESEL</th>
+                        <th>Username</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Duties Table -->
+        <div class="card">
+            <div class="card-header">
+                Duties
+            </div>
+            <div class="card-body">
+                <table class="table table-striped" id="duties-table">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Employee</th>
+                        <th>Date</th>
+                        <th>Hours</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- CREATE USER MODAL -->
+    <div class="modal fade" id="createUserModal" tabindex="-1" aria-labelledby="createUserModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content" style="background-color: #D8C4B6;">
+                <div class="modal-header" style="background-color: #213555; color: white;">
+                    <h5 class="modal-title" id="createUserModalLabel">Create User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="background:white;"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label>User Type</label>
+                        <select class="form-control" id="create-user-type" onchange="handleCreateUserTypeChange()">
+                            <option value="">-- Select --</option>
+                            <option value="Administrator">Admin</option>
+                            <option value="Doctor">Doctor</option>
+                            <option value="Nurse">Nurse</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label>Name</label>
+                        <input type="text" id="create-user-name" class="form-control"/>
+                    </div>
+                    <div class="mb-3">
+                        <label>Surname</label>
+                        <input type="text" id="create-user-surname" class="form-control"/>
+                    </div>
+                    <div class="mb-3">
+                        <label>PESEL</label>
+                        <input type="text" id="create-user-pesel" class="form-control"/>
+                    </div>
+                    <div class="mb-3">
+                        <label>Username</label>
+                        <input type="text" id="create-user-username" class="form-control"/>
+                    </div>
+                    <div class="mb-3">
+                        <label>Password</label>
+                        <input type="password" id="create-user-password" class="form-control"/>
+                    </div>
+                    
+                    <div id="create-doctor-extra" style="display:none;">
+                        <div class="mb-3">
+                            <label>PWZ Number</label>
+                            <input type="text" id="create-user-pwz" class="form-control"/>
+                        </div>
+                        <div class="mb-3">
+                            <label>Specialty</label>
+                            <select class="form-control" id="create-user-specialty">
+                                <option value="0">Cardiologist</option>
+                                <option value="1">Urologist</option>
+                                <option value="2">Neurologist</option>
+                                <option value="3">Laryngologist</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="createUser()">Create</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADD DUTY MODAL FOR DOCTORS -->
+    <div class="modal fade" id="addDoctorDutyModal" tabindex="-1" aria-labelledby="addDoctorDutyModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content" style="background-color: #D8C4B6;">
+                <div class="modal-header" style="background-color: #213555; color: white;">
+                    <h5 class="modal-title" id="addDoctorDutyModalLabel">Add Duty for Doctor</h5>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <select id="duty-doctor-select" class="form-control">
+                            <option value="">-- Select Doctor --</option>
+
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label>Date</label>
+                        <input type="date" class="form-control" id="duty-doctor-date"/>
+                    </div>
+                    <div class="mb-3">
+                        <label>Start Hour</label>
+                        <input type="time" class="form-control" id="duty-doctor-start"/>
+                    </div>
+                    <div class="mb-3">
+                        <label>End Hour</label>
+                        <input type="time" class="form-control" id="duty-doctor-end"/>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="createDoctorDuty()">Save Duty</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADD DUTY MODAL FOR NURSES -->
+    <div class="modal fade" id="addNurseDutyModal" tabindex="-1" aria-labelledby="addNurseDutyModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content" style="background-color: #D8C4B6;">
+                <div class="modal-header" style="background-color: #213555; color: white;">
+                    <h5 class="modal-title" id="addNurseDutyModalLabel">Add Duty for Nurse</h5>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label>Select Nurse</label>
+                        <select class="form-control" id="duty-nurse-select">
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label>Date</label>
+                        <input type="date" class="form-control" id="duty-nurse-date"/>
+                    </div>
+                    <div class="mb-3">
+                        <label>Start Hour</label>
+                        <input type="time" class="form-control" id="duty-nurse-start"/>
+                    </div>
+                    <div class="mb-3">
+                        <label>End Hour</label>
+                        <input type="time" class="form-control" id="duty-nurse-end"/>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="createNurseDuty()">Save Duty</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDIT EMPLOYEE MODAL -->
+    <div class="modal fade" id="editEmployeeModal" tabindex="-1" aria-labelledby="editEmployeeModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content" style="background-color: #D8C4B6;">
+                <div class="modal-header" style="background-color: #213555; color: white;">
+                    <h5 class="modal-title" id="editEmployeeModalLabel">Edit Employee</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="background:white;"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="edit-employee-id"/>
+
+                    <div class="mb-3">
+                        <label>Name</label>
+                        <input type="text" id="edit-name" class="form-control"/>
+                    </div>
+                    <div class="mb-3">
+                        <label>Surname</label>
+                        <input type="text" id="edit-surname" class="form-control"/>
+                    </div>
+                    <div class="mb-3">
+                        <label>PESEL</label>
+                        <input type="text" id="edit-pesel" class="form-control"/>
+                    </div>
+                    <div class="mb-3">
+                        <label>Username</label>
+                        <input type="text" id="edit-username" class="form-control"/>
+                    </div>
+                    <div class="mb-3">
+                        <label>New Password</label>
+                        <input type="password" id="edit-password" class="form-control" placeholder="Leave blank if the pass is same"/>
+                    </div>
+                    
+                    <div class="mb-3" id="edit-specialty-group" style="display:none;">
+                        <label>Specialty</label>
+                        <select id="edit-specialty" class="form-control">
+                            <option value="1">Cardiologist</option>
+                            <option value="2">Urologist</option>
+                            <option value="3">Neurologist</option>
+                            <option value="4">Laryngologist</option>
+                        </select>
+                    </div>
+                    <div class="mb-3" id="edit-pwz-group" style="display:none;">
+                        <label>PWZ Number</label>
+                        <input type="text" id="edit-pwz" class="form-control"/>
+                    </div>
+
+                    <input type="hidden" id="edit-role-id"/>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="updateEmployee()">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reports Modal -->
+    <div class="modal fade" id="reportsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content" style="background-color: #D8C4B6;">
+                <div class="modal-header" style="background-color: #213555; color: white;">
+                    <h5 class="modal-title">Duty Reports</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="background:white;">X</button>
+                </div>
+                <div class="modal-body">
+                    <table class="table table-striped" id="reports-table">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>DutyEmployee</th>
+                            <th>Message</th>
+                            <th>Resolved?</th>
+                            <th>Action</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <p>&copy; 2025 Hospital Management System. All rights reserved.</p>
+    </footer>
+
+    <script>
+    // LOGOUT
+    document.addEventListener("DOMContentLoaded", function() {
+        const logoutBtn = document.getElementById("logout-btn");
+        if (logoutBtn) {
+            logoutBtn.addEventListener("click", async () => {
+                if (!confirm("Are you sure you want to log out?")) return;
+
+                try {
+                    const response = await fetch("/api/auth/logout", {
+                        method: "POST",
+                        credentials: "include"
+                    });
+                    if (response.ok) {
+                        window.location.href = "/Login";
+                    } else {
+                        const err = await response.text();
+                        alert("Logout failed: " + err);
+                    }
+                } catch (err) {
+                    console.error("Logout error:", err);
+                    alert("An error occurred during logout.");
+                }
+            });
+        }
+    });
+
+    // FILL THE TABLES
+    document.addEventListener('DOMContentLoaded', () => {
+        fetchAndDisplayEmployees();
+        fetchDuties();
+    });
+
+    async function fetchAndDisplayEmployees() {
+        try {
+            const response = await fetch('/api/admin/employees');
+            if (!response.ok) {
+                throw new Error('Failed to fetch employees');
+            }
+            const employees = await response.json();
+
+            const admins = employees.filter(e => e.discriminator === 'Administrator');
+            const doctors = employees.filter(e => e.discriminator === 'Doctor');
+            const nurses = employees.filter(e => e.discriminator === 'Nurse');
+
+            displayEmployees('admins-table', admins, false);
+            displayEmployees('doctors-table', doctors, true);
+            displayEmployees('nurses-table', nurses, false);
+
+            populateDoctorDropdown(doctors);
+            populateNurseDropdown(nurses);
+        } catch (error) {
+            console.error('Error fetching employees:', error);
+        }
+    }
+
+    function displayEmployees(tableId, employees, includeSpecialty) {
+        const tableBody = document.querySelector(`#${tableId} tbody`);
+        if (!tableBody) return;
+        tableBody.innerHTML = '';
+
+        employees.forEach(emp => {
+            const row = document.createElement('tr');
+            let specialtyCol = '';
+            if (includeSpecialty) {
+                specialtyCol = `<td>${emp.specialty || 'N/A'}</td>`;
+            }
+            row.innerHTML = `
+            <td>${emp.id}</td>
+            <td>${emp.name}</td>
+            <td>${emp.surname}</td>
+            <td>${emp.pesel}</td>
+            <td>${emp.userName}</td>
+            ${specialtyCol}
+            <td>
+                <button class="btn-icon" title="Edit" onclick="loadEmployeeIntoEditForm(${emp.id})">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn-icon remove" title="Delete" onclick="deleteEmployee(${emp.id})">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </td>
+        `;
+            tableBody.appendChild(row);
+        });
+    }
+
+    const createUserBtn = document.getElementById("createUserBtn");
+    if(createUserBtn) {
+        createUserBtn.addEventListener("click", () => {
+            // Clear fields & show modal
+            document.getElementById("create-user-type").value = "";
+            document.getElementById("create-user-name").value = "";
+            document.getElementById("create-user-surname").value = "";
+            document.getElementById("create-user-pesel").value = "";
+            document.getElementById("create-user-username").value = "";
+            document.getElementById("create-user-password").value = "";
+            document.getElementById("create-user-pwz").value = "";
+            document.getElementById("create-user-specialty").selectedIndex = 0;
+
+            // Hide doctor extra fields by default
+            document.getElementById("create-doctor-extra").style.display = "none";
+
+            const modal = new bootstrap.Modal(document.getElementById('createUserModal'));
+            modal.show();
+        });
+    }
+
+    function handleCreateUserTypeChange() {
+        const userType = document.getElementById("create-user-type").value;
+        if (userType === "Doctor") {
+            document.getElementById("create-doctor-extra").style.display = "block";
+        } else {
+            document.getElementById("create-doctor-extra").style.display = "none";
+        }
+    }
+
+    async function createUser() {
+        const userType = document.getElementById("create-user-type").value;
+        if (!userType) {
+            alert("Please select a user type");
+            return;
+        }
+
+        const name = document.getElementById("create-user-name").value.trim();
+        const surname = document.getElementById("create-user-surname").value.trim();
+        const pesel = document.getElementById("create-user-pesel").value.trim();
+        const username = document.getElementById("create-user-username").value.trim();
+        const password = document.getElementById("create-user-password").value.trim();
+
+        if (!name || !surname || !pesel || !username || !password) {
+            alert("Please fill all required fields");
+            return;
+        }
+
+        let body = {
+            discriminator: userType,
+            name: name,
+            surname: surname,
+            pesel: pesel,
+            userName: username,
+            password: password,
+            roleId: userType === "Administrator" ? 1 :
+                userType === "Doctor" ? 2 :
+                    userType === "Nurse" ? 3 : null
+        };
+
+    
+        if (userType === "Doctor") {
+            const pwzNumber = document.getElementById("create-user-pwz").value.trim();
+            const specialtyValue = parseInt(document.getElementById("create-user-specialty").value, 10);
+            if (!pwzNumber) {
+                alert("PWZ Number is required for Doctor");
+                return;
+            }
+            body.pwzNumber = pwzNumber;
+            body.specialty = specialtyValue;
+        }
+
+        try {
+            const response = await fetch('/api/admin/employees', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(errText);
+            }
+            const modalEl = document.getElementById('createUserModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            modal.hide();
+
+            fetchAndDisplayEmployees();
+        } catch (error) {
+            console.error("Error creating user:", error);
+            alert("Failed to create user: " + error.message);
+        }
+    }
+
+    function openAddDoctorDutyModal() {
+        document.getElementById("duty-doctor-select").value = "";
+        document.getElementById("duty-doctor-date").value = "";
+        document.getElementById("duty-doctor-start").value = "";
+        document.getElementById("duty-doctor-end").value = "";
+
+        const modal = new bootstrap.Modal(document.getElementById('addDoctorDutyModal'));
+        modal.show();
+    }
+
+    function openAddNurseDutyModal() {
+        document.getElementById("duty-nurse-select").value = "";
+        document.getElementById("duty-nurse-date").value = "";
+        document.getElementById("duty-nurse-start").value = "";
+        document.getElementById("duty-nurse-end").value = "";
+
+        const modal = new bootstrap.Modal(document.getElementById('addNurseDutyModal'));
+        modal.show();
+    }
+
+    function populateDoctorDropdown(doctors) {
+        const select = document.getElementById("duty-doctor-select");
+        if (!select) return;
+        select.innerHTML = "<option value=''>-- Select Doctor --</option>";
+        doctors.forEach(doc => {
+            const opt = document.createElement("option");
+            opt.value = doc.id;
+            opt.textContent = `${doc.name} ${doc.surname} (${doc.id})`;
+            select.appendChild(opt);
+        });
+    }
+
+    function populateNurseDropdown(nurses) {
+        const select = document.getElementById("duty-nurse-select");
+        if (!select) return;
+        select.innerHTML = "<option value=''>-- Select Nurse --</option>";
+        nurses.forEach(nurse => {
+            const opt = document.createElement("option");
+            opt.value = nurse.id;
+            opt.textContent = `${nurse.name} ${nurse.surname} (ID: ${nurse.id})`;
+            select.appendChild(opt);
+        });
+    }
+
+    async function createDoctorDuty() {
+        const doctorId = document.getElementById("duty-doctor-select").value;
+        const date = document.getElementById("duty-doctor-date").value;
+        const start = document.getElementById("duty-doctor-start").value;
+        const end = document.getElementById("duty-doctor-end").value;
+
+        if (!doctorId) {
+            alert("Please select a doctor");
+            return;
+        }
+        if (!date || !start || !end) {
+            alert("Please fill all fields for the duty");
+            return;
+        }
+
+        const body = {
+            employeeId: parseInt(doctorId, 10),
+            dutyDate: date,
+            startHour: start + ":00",
+            endHour: end + ":00"
+        };
+
+        try {
+            const response = await fetch('/api/duty/duties', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText);
+            }
+
+            alert("Duty created successfully!");
+            const modalEl = document.getElementById('addDoctorDutyModal');
+            bootstrap.Modal.getInstance(modalEl).hide();
+            fetchDuties();
+        } catch (error) {
+            console.error("Error creating duty:", error);
+            alert("Failed to create duty: " + error.message);
+        }
+    }
+
+    async function createNurseDuty() {
+        const nurseId = document.getElementById("duty-nurse-select").value;
+        const date = document.getElementById("duty-nurse-date").value;
+        const start = document.getElementById("duty-nurse-start").value;
+        const end = document.getElementById("duty-nurse-end").value;
+
+        if (!nurseId) {
+            alert("Please select a nurse");
+            return;
+        }
+        if (!date || !start || !end) {
+            alert("Please fill all fields for the duty");
+            return;
+        }
+
+        const body = {
+            employeeId: parseInt(nurseId, 10),
+            dutyDate: date,
+            startHour: start + ":00",
+            endHour: end + ":00"
+        };
+
+        try {
+            const response = await fetch('/api/duty/duties', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText);
+            }
+
+            alert("Duty created successfully!");
+            const modalEl = document.getElementById('addNurseDutyModal');
+            bootstrap.Modal.getInstance(modalEl).hide();
+            fetchDuties();
+        } catch (error) {
+            console.error("Error creating duty:", error);
+            alert("Failed to create duty: " + error.message);
+        }
+    }
+
+    addNurseDutyModal
+
+    // EDIT EMPLOYEE DATA
+    async function loadEmployeeIntoEditForm(employeeId) {
+        try {
+            const response = await fetch(`/api/admin/employees/${employeeId}`);
+            if (!response.ok) throw new Error('Failed to fetch employee');
+
+            const emp = await response.json();
+            document.getElementById('edit-employee-id').value = emp.id;
+            document.getElementById('edit-name').value = emp.name || '';
+            document.getElementById('edit-surname').value = emp.surname || '';
+            document.getElementById('edit-pesel').value = emp.pesel || '';
+            document.getElementById('edit-username').value = emp.userName || '';
+            document.getElementById('edit-password').value = '';
+
+            document.getElementById('edit-specialty-group').style.display = 'none';
+            document.getElementById('edit-pwz-group').style.display = 'none';
+
+            const roleId = emp.roleId;
+            document.getElementById('edit-role-id').value = roleId || '';
+
+            // If doctor, show specialty & PWZ
+            if (roleId === 2) {
+                document.getElementById('edit-specialty-group').style.display = 'block';
+                document.getElementById('edit-pwz-group').style.display = 'block';
+
+                if (emp.specialty !== undefined) {
+                    // map it to a numeric
+                    document.getElementById('edit-specialty').value = mapSpecialtyToValue(emp.specialty);
+                }
+                if (emp.pwzNumber !== undefined) {
+                    document.getElementById('edit-pwz').value = emp.pwzNumber;
+                }
+            }
+
+            const editModal = new bootstrap.Modal(document.getElementById('editEmployeeModal'), {});
+            editModal.show();
+        } catch (error) {
+            console.error('Error loading employee:', error);
+            alert('Could not load employee.');
+        }
+    }
+
+    function mapSpecialtyToValue(specialty) {
+        if (typeof specialty === 'number') return specialty;
+        if (typeof specialty === 'string') {
+            switch (specialty.toLowerCase()) {
+                case 'cardiologist':  return 0;
+                case 'urologist':     return 1;
+                case 'neurologist':   return 2;
+                case 'laryngologist': return 3;
+            }
+        }
+        return 0;
+    }
+
+    async function updateEmployee() {
+        const id = document.getElementById('edit-employee-id').value;
+        const name = document.getElementById('edit-name').value.trim();
+        const surname = document.getElementById('edit-surname').value.trim();
+        const pesel = document.getElementById('edit-pesel').value.trim();
+        const username = document.getElementById('edit-username').value.trim();
+        const password = document.getElementById('edit-password').value.trim();
+        const roleId = parseInt(document.getElementById('edit-role-id').value, 10);
+
+        let specialty = null;
+        let pwzNumber = null;
+
+        if (roleId === 2) {
+            specialty = parseInt(document.getElementById('edit-specialty').value, 10);
+            pwzNumber = document.getElementById('edit-pwz').value.trim();
+        }
+
+        const body = {
+            name,
+            surname,
+            pesel,
+            userName: username,
+            password: password !== '' ? password : null,
+            roleId
+        };
+        if (specialty !== null) body.specialty = specialty;
+        if (pwzNumber !== null) body.pwzNumber = pwzNumber;
+
+        try {
+            const response = await fetch(`/api/admin/employees/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(errText);
+            }
+
+            const editModalEl = document.getElementById('editEmployeeModal');
+            const modal = bootstrap.Modal.getInstance(editModalEl);
+            modal.hide();
+
+            fetchAndDisplayEmployees();
+        } catch (error) {
+            console.error('Error updating employee:', error);
+            alert('Failed to update employee: ' + error.message);
+        }
+    }
+
+    // REMOVE EMPLOYEE 
+    async function deleteEmployee(employeeId) {
+        if (!confirm('Are you sure you want to delete this user?')) return;
+        try {
+            const response = await fetch(`/api/admin/employees/${employeeId}`, {
+                method: 'DELETE'
+            });
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(errText);
+            }
+            fetchAndDisplayEmployees();
+        } catch (error) {
+            console.error('Error deleting employee:', error);
+            alert('Failed to delete employee: ' + error.message);
+        }
+    }
+
+    async function fetchDuties() {
+        try {
+            const resp = await fetch('/api/duty');
+            if(!resp.ok) throw new Error("Failed to load duties");
+            const duties = await resp.json();
+
+            const tbody = document.querySelector('#duties-table tbody');
+            tbody.innerHTML = '';
+            duties.forEach(d => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+        <td>${d.id}</td>
+        <td>${d.employeeName} ${d.employeeSurname}</td>
+        <td>${d.dutyDate.split('T')[0]}</td>
+        <td>${d.startHour} - ${d.endHour}</td>
+        <td>
+          <button class="btn-icon" onclick="openEditDutyModal(${d.id})">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button class="btn-icon remove" onclick="deleteDuty(${d.id})">
+            <i class="fas fa-trash-alt"></i>
+          </button>
+        </td>`;
+                tbody.appendChild(row);
+            });
+        } catch(e) {
+            console.error("Error fetching duties:", e);
+        }
+    }
+
+    async function deleteDuty(dutyId) {
+        if(!confirm("Are you sure you want to delete this duty?")) return;
+        try {
+            const resp = await fetch(`/api/duty/${dutyId}`, { method: 'DELETE' });
+            if(!resp.ok) {
+                const txt = await resp.text();
+                throw new Error(txt);
+            }
+            alert("Duty deleted");
+            fetchDuties();
+        } catch(e) {
+            console.error("Delete duty error:", e);
+            alert("Failed to delete duty: " + e.message);
+        }
+    }
+
+    async function openEditDutyModal(dutyId) {
+        try {
+            const resp = await fetch(`/api/duty`);
+            if(!resp.ok) throw new Error("Failed to load duties");
+            const allDuties = await resp.json();
+            const duty = allDuties.find(d => d.id === dutyId);
+            if(!duty) {
+                alert("Duty not found in the list");
+                return;
+            }
+            document.getElementById("edit-duty-id").value = duty.id;
+            document.getElementById("edit-duty-date").value = duty.dutyDate.split('T')[0];
+            document.getElementById("edit-duty-start").value = duty.startHour; // "HH:MM"
+            document.getElementById("edit-duty-end").value = duty.endHour;
+
+            const modal = new bootstrap.Modal(document.getElementById('editDutyModal'));
+            modal.show();
+        } catch(e) {
+            console.error(e);
+            alert("Could not open duty for edit: " + e.message);
+        }
+    }
+
+    async function updateDuty() {
+        const dutyId = document.getElementById("edit-duty-id").value;
+        const date = document.getElementById("edit-duty-date").value;
+        const start = document.getElementById("edit-duty-start").value;
+        const end = document.getElementById("edit-duty-end").value;
+
+        if(!date || !start || !end) {
+            alert("Please fill all fields");
+            return;
+        }
+
+        // build update body
+        const body = {
+            dutyDate: date,
+            startHour: start,
+            endHour: end
+        };
+
+        try {
+            const resp = await fetch(`/api/duty/${dutyId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            if(!resp.ok) {
+                const txt = await resp.text();
+                throw new Error(txt);
+            }
+            alert("Duty updated");
+            const modalEl = document.getElementById('editDutyModal');
+            bootstrap.Modal.getInstance(modalEl).hide();
+
+            fetchDuties();
+        } catch(e) {
+            console.error(e);
+            alert("Failed to update duty: " + e.message);
+        }
+    }
+
+    async function openReportsModal() {
+        try {
+            const resp = await fetch('/api/duty/reports');
+            if(!resp.ok) throw new Error("Failed to load reports");
+            const reports = await resp.json();
+
+            const tbody = document.querySelector("#reports-table tbody");
+            tbody.innerHTML = '';
+
+            if(reports.length === 0) {
+                // Display a single row that says "No reports made currently"
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="5">No reports made currently</td>`;
+                tbody.appendChild(row);
+            } else {
+                reports.forEach(r => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+          <td>${r.id}</td>
+          <td>${r.dutyEmployeeName} ${r.dutyEmployeeSurname}</td>
+          <td>${r.message}</td>
+          <td>${r.isResolved ? 'Yes' : 'No'}</td>
+          <td>
+            ${r.isResolved
+                        ? '<button class="btn btn-danger btn-sm" onclick="deleteReport('+r.id+')">Delete</button>'
+                        : '<button class="btn btn-sm btn-success" onclick="resolveReport('+r.id+')">Resolve</button>'}
+          </td>
+        `;
+                    tbody.appendChild(row);
+                });
+            }
+
+            const modal = new bootstrap.Modal(document.getElementById('reportsModal'));
+            modal.show();
+        } catch(e) {
+            console.error("Error fetching reports:", e);
+            alert("Could not load reports: " + e.message);
+        }
+    }
+
+    async function resolveReport(reportId) {
+        if(!confirm("Mark this report as resolved?")) return;
+        try {
+            const resp = await fetch(`/api/duty/reports/${reportId}/resolve`, {
+                method: 'PUT'
+            });
+            if(!resp.ok) {
+                const txt = await resp.text();
+                throw new Error(txt);
+            }
+            alert("Report resolved");
+            const modalEl = document.getElementById('reportsModal');
+            bootstrap.Modal.getInstance(modalEl).hide(); // Close the modal
+            openReportsModal(); // Reload modal content
+        } catch(e) {
+            console.error(e);
+            alert("Failed to resolve report: " + e.message);
+        }
+    }
+
+    async function deleteReport(reportId) {
+        if(!confirm("Are you sure you want to delete this report?")) return;
+        try {
+            const resp = await fetch(`/api/duty/reports/${reportId}`, {
+                method: 'DELETE'
+            });
+            if(!resp.ok) {
+                const txt = await resp.text();
+                throw new Error(txt);
+            }
+            const modalEl = document.getElementById('reportsModal');
+            bootstrap.Modal.getInstance(modalEl).hide(); // Close the modal
+            openReportsModal(); // Reload modal content
+        } catch(e) {
+            console.error("Failed to delete report:", e);
+            alert("Failed to delete report: " + e.message);
+        }
+    }
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,139 @@
+@page
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@attribute [AllowAnonymous]
+@model Hospital_Management.Pages.Login.Login
+
+@{
+Layout = null;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hospital - Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        body {
+            background-color: #F4E0AF;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .navbar {
+            background-color: #213555;
+        }
+        .navbar-nav .nav-link {
+            color: white;
+            font-size: 1.1rem;
+            padding: 10px 15px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .navbar-nav .nav-link:hover {
+            color: white;
+            background-color: #808080;
+            border-radius: 5px;
+        }
+        .login-container {
+            margin: 50px auto;
+            max-width: 400px;
+            background-color: #D8C4B6;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+        .login-container h2 {
+            text-align: center;
+            font-weight: bold;
+            color: #213555;
+            margin-bottom: 20px;
+        }
+        .btn-login {
+            background-color: #4B4376;
+            color: white;
+            border: none;
+            width: 100%;
+        }
+        .btn-login:hover {
+            background-color: #AE445A;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            background-color: #213555;
+            color: white;
+            margin-top: auto;
+        }
+    </style>
+</head>
+<body>
+<div>
+    <div class="container">
+        <div class="login-container">
+            <h2>Login</h2>
+            <form id="login-form">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" class="form-control" id="username" placeholder="Enter your username" />
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="password" placeholder="Enter your password" />
+                </div>
+                <button type="submit" class="btn btn-login">Login</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const form = document.getElementById("login-form");
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const username = document.getElementById("username").value.trim();
+            const password = document.getElementById("password").value.trim();
+
+            try {
+                const response = await fetch("/api/Auth/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ userName: username, password: password })
+                })
+
+
+                if (!response.ok) {
+                    const errMsg = await response.text();
+                    alert("Login failed: " + errMsg);
+                    return;
+                }
+
+                // We expect "Admin", "Doctor", or "Nurse"
+                const role = await response.text(); // you could also do JSON if you prefer
+
+                // Redirect based on role
+                switch(role) {
+                    case "Admin":
+                        window.location.href = "/admin_dashboard";
+                        break;
+                    case "Doctor":
+                        window.location.href = "/doctor_dashboard";
+                        break;
+                    case "Nurse":
+                        window.location.href = "/nurse_dashboard";
+                        break;
+                    default:
+                        alert("Unknown role: " + role);
+                        break;
+                }
+            } catch (error) {
+                console.error("Login error:", error);
+                alert("An error occurred during login.");
+            }
+        });
+    });
+</script>
+
+</body>
+</html>

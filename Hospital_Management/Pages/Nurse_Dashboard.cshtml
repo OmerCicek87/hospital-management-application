@@ -1,0 +1,330 @@
+@page
+@model Hospital_Management.Pages.Nurse_Dashboard
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nurse Profile</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #FFF5DB;
+            color: #213555;
+            line-height: 1.6;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #213555;
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        header a {
+            color: white;
+            text-decoration: none;
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        header a:hover {
+            text-decoration: underline;
+        }
+
+        .logout-button, .report-button {
+            background-color: #213555;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-left: 1rem;
+        }
+
+        .logout-button:hover, .report-button:hover {
+            background-color: #3E5879;
+        }
+
+        .button-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 2rem auto;
+            background-color: #FFECCF;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        h2 {
+            color: #213555;
+            border-bottom: 2px solid #213555;
+            display: inline-block;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.25rem;
+            font-size: 1.8rem;
+            text-align: center;
+        }
+
+        .profile {
+            margin-bottom: 2.5rem;
+            text-align: center;
+        }
+
+        .profile h3 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: #213555;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.5rem;
+            font-size: 1rem;
+            background-color: #FFF5DB;
+            text-align: center;
+            color: #213555;
+        }
+
+        table th, table td {
+            border: 1px solid #3E5879;
+            padding: 0.75rem;
+        }
+
+        table th {
+            background-color: #3E5879;
+            color: white;
+            font-weight: bold;
+        }
+
+        table tbody tr:nth-child(even) {
+            background-color: #D8C4B6;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 2rem;
+            padding: 1rem 0;
+            background-color: #213555;
+            color: white;
+            font-size: 1rem;
+            border-top: 2px solid #213555;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: #FFF5DB;
+            padding: 20px;
+            border-radius: 8px;
+            width: 400px;
+            text-align: center;
+        }
+
+        .modal-content h3 {
+            color: #213555;
+        }
+
+        .modal-content p {
+            color: #3E5879;
+            font-size: 14px;
+        }
+
+        .modal-content textarea {
+            width: 100%;
+            height: 100px;
+            margin-top: 10px;
+            border-radius: 5px;
+            padding: 10px;
+            border: 1px solid #3E5879;
+        }
+
+        .modal-content button {
+            width: 100%;
+            margin-top: 10px;
+        }
+    </style>
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.js"></script>
+</head>
+<body>
+<header>
+    <a href="#">Hospital Management</a>
+    <div class="button-container">
+        <button class="btn btn-logout nav-link logout-button" id="logout-btn" style="border: none;">Logout</button>
+    </div>
+</header>
+
+<div class="container">
+    <section class="profile">
+        <h2>Nurse Profile</h2>
+        <h3 id="nurse-fullname">...</h3>
+        <div id="calendar"></div>
+    </section>
+</div>
+
+<!-- Report Modal -->
+<div id="reportModal" class="modal">
+    <div class="modal-content">
+        <h3>Report Duty</h3>
+        <p id="dutyDetails">Loading duty details...</p>
+        <p>Please explain the problem with the selected duty.</p>
+        <textarea id="reportMessage" placeholder="Enter your message..."></textarea>
+        <button id="submitReport" class="report-button">Submit Report</button>
+        <button id="closeModal" class="logout-button">Cancel</button>
+    </div>
+</div>
+
+<footer>
+    &copy; 2025 Hospital Management System. All Rights Reserved.
+</footer>
+
+<script>
+    let employeeId;
+    let selectedDuty = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        try {
+            const resp = await fetch('/api/auth/me');
+            if (!resp.ok) throw new Error("Failed to fetch current user");
+            const me = await resp.json();
+            document.getElementById("nurse-fullname").textContent = `${me.name} ${me.surname}`;
+            employeeId = me.id;
+            fetchAndDisplayDuties(employeeId);
+        } catch (e) {
+            console.error(e);
+            alert("Could not load nurse profile");
+        }
+
+        document.getElementById('closeModal').addEventListener('click', hideReportModal);
+        document.getElementById('submitReport').addEventListener('click', submitReport);
+    });
+
+    async function fetchAndDisplayDuties(employeeId) {
+        let duties = [];
+        try {
+            const resp = await fetch(`/api/duty/employee/${employeeId}`);
+            if (!resp.ok) throw new Error("Failed to load duties");
+            duties = await resp.json();
+        } catch (e) {
+            console.error("Error fetching duties:", e);
+            return;
+        }
+
+        const events = duties.map(d => ({
+            id: d.id,
+            title: `Shift: ${d.startHour} - ${d.endHour}`,
+            start: `${d.dutyDate}T${d.startHour}`,
+            end: `${d.dutyDate}T${d.endHour}`,
+            extendedProps: { id: d.id, dutyDate: d.dutyDate, startHour: d.startHour, endHour: d.endHour }
+        }));
+
+        const calendarEl = document.getElementById('calendar');
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            events: events,
+            eventClick: (info) => showReportModal(info.event.extendedProps)
+        });
+        calendar.render();
+    }
+
+    function showReportModal(duty) {
+        selectedDuty = duty;
+        const dutyDetails = `Duty Date: ${duty.dutyDate} | Time: ${duty.startHour} - ${duty.endHour}`;
+        document.getElementById('dutyDetails').textContent = dutyDetails;
+        document.getElementById('reportModal').style.display = 'flex';
+    }
+
+    function hideReportModal() {
+        document.getElementById('reportModal').style.display = 'none';
+        document.getElementById('reportMessage').value = '';
+    }
+
+    async function submitReport() {
+        const message = document.getElementById('reportMessage').value.trim();
+        if (!message) {
+            alert("Please enter a message.");
+            return;
+        }
+
+        if (!selectedDuty) {
+            alert("No duty selected!");
+            return;
+        }
+
+        const reportPayload = {
+            DutyId: selectedDuty.id,
+            ReportingEmployeeId: employeeId,
+            Message: message
+        };
+
+        try {
+            const resp = await fetch('/api/duty/report', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(reportPayload)
+            });
+
+            if (!resp.ok) throw new Error("Failed to submit report");
+            alert("Report submitted successfully!");
+            hideReportModal();
+        } catch (e) {
+            console.error("Error submitting report:", e);
+            alert("An error occurred while submitting the report.");
+        }
+    }
+
+    // LOGOUT
+    document.addEventListener("DOMContentLoaded", function() {
+        const logoutBtn = document.getElementById("logout-btn");
+        if (logoutBtn) {
+            logoutBtn.addEventListener("click", async () => {
+                if (!confirm("Are you sure you want to log out?")) return;
+
+                try {
+                    const response = await fetch("/api/auth/logout", {
+                        method: "POST",
+                        credentials: "include"
+                    });
+                    if (response.ok) {
+                        window.location.href = "/Login";
+                    } else {
+                        const err = await response.text();
+                        alert("Logout failed: " + err);
+                    }
+                } catch (err) {
+                    console.error("Logout error:", err);
+                    alert("An error occurred during logout.");
+                }
+            });
+        }
+    });
+</script>
+</body>
+</html>
